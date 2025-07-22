@@ -1,0 +1,61 @@
+{
+  "name": "portfolio-backend",
+  "version": "1.0.0",
+  "description": "Portfolio content management backend with enhanced security and image handling",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node scripts/seed.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .js",
+    "format": "prettier --write .",
+    "health": "curl http://localhost:5000/api/health",
+    "vercel-build": "echo 'Build complete'",
+    "deploy": "vercel --prod",
+    "deploy-dev": "vercel"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^6.11.2",
+    "helmet": "^7.2.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.8.7",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.2.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KiranGunathilaka/portfolio_backend.git"
+  },
+  "keywords": [
+    "portfolio",
+    "cms",
+    "backend",
+    "express",
+    "mongodb",
+    "cloudinary",
+    "jwt",
+    "api"
+  ],
+  "author": "Kiran Gunathilaka",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KiranGunathilaka/portfolio_backend/issues"
+  },
+  "homepage": "https://github.com/KiranGunathilaka/portfolio_backend#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
