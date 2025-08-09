@@ -15,6 +15,7 @@ import {
   MessageCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import emailjs from '@emailjs/browser';
 
 export const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -26,13 +27,20 @@ export const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  // EmailJS configuration
+  const EMAILJS_CONFIG = {
+    publicKey: "7jFkgEY2jthFQGfsc",
+    serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_3fh47fh",
+    templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "template_w7kpl3k"
+  };
+
   const contactInfo = [
     {
       icon: Mail,
       label: "Email",
       value: "kirangunathilaka@gmail.com",
       href: "mailto:kirangunathilaka@gmail.com",
-      description: "Primary contact for projects and collaborations"
+      description: "Primary contact"
     },
     {
       icon: Linkedin,
@@ -53,7 +61,7 @@ export const ContactSection = () => {
       label: "GrabCAD",
       value: "kiran.gunathilaka",
       href: "https://grabcad.com/kiran.gunathilaka-1",
-      description: "3D designs and mechanical projects"
+      description: "3D designs and mechanical designs"
     }
   ];
 
@@ -90,25 +98,48 @@ export const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Initialize EmailJS with public key
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+
+      // Prepare template parameters that match your EmailJS template
+      const templateParams = {
+        to_name: "Kiran", // Your name as the recipient
+        from_name: formData.name,
+        from_email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        reply_to: formData.email
+      };
+
+      // Send email using EmailJS
+      const response = await emailjs.send(
+        EMAILJS_CONFIG.serviceId,
+        EMAILJS_CONFIG.templateId,
+        templateParams
+      );
+
+      console.log('Email sent successfully:', response);
 
       toast({
         title: "Message sent successfully!",
         description: "Thank you for reaching out. I'll get back to you within 24 hours.",
       });
 
+      // Reset form
       setFormData({
         name: "",
         email: "",
         subject: "",
         message: ""
       });
+
     } catch (error) {
+      console.error('Error sending email:', error);
+      
       toast({
         title: "Error sending message",
-        description: "Please try again or contact me directly via email.",
+        description: "There was a problem sending your message. Please try again or contact me directly via email.",
         variant: "destructive",
       });
     } finally {
@@ -127,7 +158,7 @@ export const ContactSection = () => {
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Ready to bring your ideas to life? Let's discuss your project and explore
-              how my expertise can help achieve your technical goals.
+              how I can help achieve your technical goals.
             </p>
           </div>
 

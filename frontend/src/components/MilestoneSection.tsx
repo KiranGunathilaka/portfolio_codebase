@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, GraduationCap, Award, Calendar } from "lucide-react";
+import { Download, GraduationCap, Award, Calendar, ExternalLink } from "lucide-react";
 import ApiService from "../services/api";
 
 interface Milestone {
@@ -36,12 +36,12 @@ export const MilestoneSection = () => {
         setLoading(true);
         const response = await ApiService.getMilestones();
         const milestones = response.milestones || [];
-        
+
         // Separate education and certifications
         const educationData = milestones
           .filter((milestone: Milestone) => milestone.type === 'education')
           .sort((a: Milestone, b: Milestone) => (b.order || 0) - (a.order || 0));
-        
+
         const certificationData = milestones
           .filter((milestone: Milestone) => milestone.type === 'certification')
           .sort((a: Milestone, b: Milestone) => (a.order || 0) - (b.order || 0));
@@ -59,6 +59,14 @@ export const MilestoneSection = () => {
     fetchMilestones();
   }, []);
 
+  const handleCertificationClick = (credentialUrl: string) => {
+    if (credentialUrl && credentialUrl.trim()) {
+      // Add https:// if not present
+      const url = credentialUrl.startsWith('http') ? credentialUrl : `https://${credentialUrl}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   if (loading) {
     return (
       <section className="py-20 bg-background">
@@ -68,7 +76,7 @@ export const MilestoneSection = () => {
               <div className="animate-pulse">
                 <div className="h-8 bg-muted rounded w-64 mx-auto mb-4"></div>
                 <div className="h-4 bg-muted rounded w-96 mx-auto mb-8"></div>
-                <div className="space-y-8">
+                <div className="space-y-8 sm:space-y-0">
                   {[...Array(3)].map((_, i) => (
                     <div key={i} className="bg-muted rounded-lg h-48"></div>
                   ))}
@@ -87,8 +95,8 @@ export const MilestoneSection = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto text-center">
             <p className="text-red-500">Error loading milestones: {error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
+            <Button
+              onClick={() => window.location.reload()}
               className="mt-4"
             >
               Retry
@@ -136,9 +144,9 @@ export const MilestoneSection = () => {
                           <div className="flex flex-wrap items-center gap-2 mb-3">
                             <Badge
                               className={`${edu.status === "Current"
-                                  ? "bg-green-500 text-white"
-                                  : "bg-primary text-primary-foreground"
-                                }`}
+                                ? "bg-green-500 text-white"
+                                : "bg-primary text-primary-foreground"
+                              }`}
                             >
                               {edu.status}
                             </Badge>
@@ -156,6 +164,7 @@ export const MilestoneSection = () => {
                           {edu.institution && (
                             <p className="text-primary mb-2">{edu.institution}</p>
                           )}
+
                           {edu.description && (
                             <p className="text-muted-foreground text-sm leading-relaxed mb-4">
                               {edu.description}
@@ -168,7 +177,7 @@ export const MilestoneSection = () => {
                               {edu.gpa && (
                                 <div className="flex items-center space-x-2">
                                   <GraduationCap className="w-4 h-4 text-primary" />
-                                  <span className="font-semibold text-sm">CGPA: {edu.gpa}</span>
+                                  <span className="font-semibold text-sm">{edu.gpa}</span>
                                 </div>
                               )}
                               {edu.recentGPA && (
@@ -190,7 +199,7 @@ export const MilestoneSection = () => {
                             <div>
                               <h4 className="font-semibold text-foreground mb-2 text-sm">Key Achievements:</h4>
                               <div className="space-y-1">
-                                {edu.achievements.slice(0, 2).map((achievement, achIndex) => (
+                                {edu.achievements.map((achievement, achIndex) => (
                                   <div key={achIndex} className="flex items-start space-x-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
                                     <span className="text-xs text-muted-foreground">{achievement}</span>
@@ -217,25 +226,50 @@ export const MilestoneSection = () => {
               <div className="overflow-x-auto pb-4">
                 <div className="flex space-x-6 min-w-max px-4">
                   {certifications.map((cert, index) => (
-                    <Card key={cert._id} className="bg-gradient-card border-border/20 shadow-card hover:shadow-hover transition-all duration-300 group flex-shrink-0 w-64">
-                      <CardContent className="p-6 text-center">
-                        <div className="w-12 h-12 rounded-full bg-primary/20 mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Award className="w-6 h-6 text-primary" />
-                        </div>
-                        <h4 className="font-semibold text-foreground mb-2 text-sm">{cert.title}</h4>
-                        {cert.issuer && (
-                          <p className="text-xs text-muted-foreground mb-2">{cert.issuer}</p>
-                        )}
-                        <div className="flex items-center justify-between">
-                          {cert.certType && (
-                            <Badge variant="secondary" className="text-xs">{cert.certType}</Badge>
+                    <div
+                      key={cert._id}
+                      onClick={() => cert.description && handleCertificationClick(cert.description)}
+                      className={`group flex-shrink-0 w-64 transition-all duration-300 ${
+                        cert.description && cert.description.trim()
+                          ? 'cursor-pointer hover:scale-105 hover:shadow-hover'
+                          : ''
+                      }`}
+                    >
+                      <Card className="bg-gradient-card border-border/20 shadow-card hover:shadow-hover transition-all duration-300 h-full">
+                        <CardContent className="p-6 text-center">
+                          <div className="w-12 h-12 rounded-full bg-primary/20 mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Award className="w-6 h-6 text-primary" />
+                          </div>
+                          
+                          <h4 className="font-semibold text-foreground mb-2 text-sm group-hover:text-primary transition-colors">
+                            {cert.title}
+                          </h4>
+                          
+                          {cert.issuer && (
+                            <p className="text-xs text-muted-foreground mb-2">{cert.issuer}</p>
                           )}
-                          {cert.date && (
-                            <span className="text-xs text-muted-foreground">{cert.date}</span>
+                          
+                          {/* Show external link icon if credential URL exists */}
+                          {cert.description && cert.description.trim() && (
+                            <div className="flex items-center justify-center mb-2">
+                              <ExternalLink className="w-3 h-3 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
+                              <span className="text-xs text-primary ml-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                View Credential
+                              </span>
+                            </div>
                           )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                          
+                          <div className="flex items-center justify-between">
+                            {cert.certType && (
+                              <Badge variant="secondary" className="text-xs">{cert.certType}</Badge>
+                            )}
+                            {cert.date && (
+                              <span className="text-xs text-muted-foreground">{cert.date}</span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   ))}
                 </div>
               </div>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, Download, MessageCircle } from "lucide-react";
 
 export const HeroSection = () => {
-  const rotatingSubtitles = ["Robotics Engineer", "Embedded Systems", "Full-Stack Developer", "Systems Integrator"];
+  const rotatingSubtitles = ["Robotics", "Embedded Systems", "Full-Stack Software"];
 
   // Responsive particle count logic
   const [pointCount, setPointCount] = useState(60); // default desktop

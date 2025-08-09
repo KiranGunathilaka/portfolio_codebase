@@ -1,21 +1,21 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import profile from "@/assets/profile.jpeg";
+//import profile from "@/assets/profile.jpeg";
 
 
 export const AboutSection = () => {
   const stats = [
-    { number: "4+", label: "Years Experience", description: "Academic & Project Work" },
-    { number: "15+", label: "Projects Completed", description: "Robotics & Software" },
-    { number: "3+", label: "Ongoing Projects", description: "Active Development" }
+    { number: "3+", label: "Years Experience", description: "Academic & Project Work" },
+    { number: "10+", label: "Projects Completed", description: "Robotics, Embedded Systems & Software" },
+    { number: "2+", label: "Ongoing Projects", description: "Active Development" }
   ];
 
   const highlights = [
     "End-to-end problem solving from hardware to cloud",
     "Expertise in autonomous robotics and IoT systems",
     "Cross-domain fluency in embedded and web technologies",
-    "Leadership experience in competitive robotics teams",
-    "Open source contributor and technical mentor"
+    "Leadership experience in competitive multi-disciplinary teams",
+    "Open source contributor and technical mentoring"
   ];
 
   return (
@@ -28,8 +28,8 @@ export const AboutSection = () => {
               About <span className="text-primary">Me</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              I'm Kiran Lokanjana Gunathilaka, a Systems Developer who builds complete solutions—from
-              custom PCBs and bare-metal firmware to cloud-hosted applications.
+              I'm Kiran Lokanjana Gunathilaka, a Systems Developer who builds complete solutions from
+              custom PCBs and embedded firmware to cloud-hosted applications.
             </p>
           </div>
 
@@ -42,7 +42,7 @@ export const AboutSection = () => {
 
                   {/* Avatar with subtle glow */}
                   <img
-                    src= {profile}
+                    src= "https://res.cloudinary.com/dxavadkl2/image/upload/v1753638876/profile_sk0zfv.jpg"
                     alt="Kiran Gunathilaka"
                   />
                 </div>
@@ -56,13 +56,12 @@ export const AboutSection = () => {
             <div className="order-1 md:order-2 space-y-6">
               <div className="prose prose-lg dark:prose-invert">
                 <p className="text-foreground leading-relaxed">
-                  Currently pursuing B.Sc. Electronic & Telecommunication Engineering at the University of Moratuwa,
+                  Currently pursuing B.Sc. Electronic & Telecommunication Engineering at the University of Moratuwa, Sri Lanka.
                   I specialize in creating innovative solutions that bridge the physical and digital worlds.
                 </p>
                 <p className="text-muted-foreground leading-relaxed">
-                  My expertise spans from designing custom PCBs and developing bare-metal firmware to creating
-                  sophisticated web applications and cloud architectures. I'm passionate about autonomous robotics,
-                  IoT systems, and building technology that makes a meaningful impact.
+                  I'm passionate and learning further about robotics,
+                  embedded and IoT applications, machine learning and computer vision  and my objective is to contribute to building technology that makes a meaningful impact.
                 </p>
               </div>
 
@@ -88,7 +87,8 @@ export const AboutSection = () => {
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">🎓 B.Sc. Electronic & Telecommunication Engineering</p>
-                    <p className="text-sm text-muted-foreground">📍 University of Moratuwa • CGPA 3.74</p>
+                    <p className="text-sm text-muted-foreground">📍 University of Moratuwa </p> 
+                    {/* • CGPA 3.74 */}
                     <p className="text-sm text-muted-foreground">🎯 Expected Graduation: 2027</p>
                     <div className="flex flex-wrap gap-2 mt-3">
                       <Badge variant="secondary">Available for Freelance</Badge>

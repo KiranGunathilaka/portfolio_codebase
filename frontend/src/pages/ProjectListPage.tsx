@@ -61,9 +61,15 @@ export const ProjectListPage = () => {
     { id: "software", label: "Software", icon: Globe }
   ];
 
-  const filteredProjects = activeFilter === "all"
-    ? projects
-    : projects.filter(project => project.category === activeFilter);
+const filteredProjects = (activeFilter === "all"
+  ? projects
+  : projects.filter(project => project.category === activeFilter)
+).sort((a, b) => {
+  // Featured projects first
+  if (a.featured && !b.featured) return -1;
+  if (!a.featured && b.featured) return 1;
+  return 0; // Keep original order for same featured status
+});
 
   const handleBackToPortfolio = () => {
     navigate("/", { state: { scrollToPortfolio: true } });

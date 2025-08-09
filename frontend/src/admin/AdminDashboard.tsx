@@ -260,13 +260,12 @@ const AdminDashboard = () => {
     if (!uploadStatus) return null;
 
     return (
-      <div className={`fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg max-w-sm ${
-        uploadStatus.includes('failed') || uploadStatus.includes('Error') || uploadStatus.includes('error')
+      <div className={`fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg max-w-sm ${uploadStatus.includes('failed') || uploadStatus.includes('Error') || uploadStatus.includes('error')
           ? 'bg-red-500 text-white'
           : uploadStatus.includes('Uploading') || uploadStatus.includes('Saving')
-          ? 'bg-blue-500 text-white'
-          : 'bg-green-500 text-white'
-      }`}>
+            ? 'bg-blue-500 text-white'
+            : 'bg-green-500 text-white'
+        }`}>
         <div className="flex items-center gap-2">
           {uploadStatus.includes('Uploading') || uploadStatus.includes('Saving') ? (
             <Loader className="w-4 h-4 animate-spin" />
@@ -684,7 +683,7 @@ const AdminDashboard = () => {
     );
   };
 
-  // Milestone Form Component
+  // Milestone Form Component - Updated section only
   const MilestoneForm = () => {
     const [formData, setFormData] = useState({
       type: editingItem?.type || 'education',
@@ -708,7 +707,7 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         setUploadStatus('Saving milestone...');
-        
+
         const data = {
           ...formData,
           achievements: formData.achievements.split('\n').map(a => a.trim()).filter(Boolean),
@@ -876,14 +875,26 @@ const AdminDashboard = () => {
           </>
         )}
 
+        {/* Dynamic Description/Credential URL field */}
         <div>
-          <label className="block text-sm font-medium mb-2">Description</label>
+          <label className="block text-sm font-medium mb-2">
+            {formData.type === 'certification' ? 'Credential URL' : 'Description'}
+          </label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="w-full p-3 border rounded-lg bg-background h-20"
-            placeholder="Brief description"
+            placeholder={
+              formData.type === 'certification'
+                ? "https://example.com/credential-verification"
+                : "Brief description"
+            }
           />
+          {formData.type === 'certification' && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter the full URL to the credential verification page. Users can click on the certification card to view it.
+            </p>
+          )}
         </div>
 
         <div>
@@ -979,7 +990,7 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         setUploadStatus('Saving skills...');
-        
+
         await Promise.all([
           ApiService.updateSkills({ skills: technicalSkills }),
           ApiService.updateSoftSkills({ softSkills: softSkillsList })
@@ -1275,11 +1286,10 @@ const AdminDashboard = () => {
         </div>
 
         {settingsStatus && (
-          <div className={`p-3 rounded-lg ${
-            settingsStatus.includes('Error') || settingsStatus.includes('error')
+          <div className={`p-3 rounded-lg ${settingsStatus.includes('Error') || settingsStatus.includes('error')
               ? 'bg-red-50 border border-red-200 text-red-700'
               : 'bg-green-50 border border-green-200 text-green-700'
-          }`}>
+            }`}>
             <div className="flex items-center gap-2">
               {settingsStatus.includes('Error') || settingsStatus.includes('error') ? (
                 <AlertCircle className="w-4 h-4" />
@@ -1842,9 +1852,8 @@ const AdminDashboard = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-6 py-3 text-left hover:bg-muted/50 transition-colors ${
-                  activeTab === item.id ? 'bg-muted border-r-2 border-primary' : ''
-                }`}
+                className={`w-full flex items-center space-x-3 px-6 py-3 text-left hover:bg-muted/50 transition-colors ${activeTab === item.id ? 'bg-muted border-r-2 border-primary' : ''
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{item.label}</span>

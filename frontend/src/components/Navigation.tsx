@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Menu, X, Moon, Sun, Github, Linkedin, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import me from "@/assets/me.png";
+//import me from "@/assets/me.png";
+
 interface NavigationProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
@@ -39,7 +40,7 @@ export const Navigation = ({ activeSection, setActiveSection, isDark, toggleThem
             <Avatar className="w-10 h-10 shrink-0">
               {/* Put your photo in /public or /src/assets and update the path */}
               <AvatarImage
-                src= {me}
+                src= "https://res.cloudinary.com/dxavadkl2/image/upload/v1753638847/me_cs4dvb.png"
                 alt="Kiran Gunathilaka"
                 className="object-cover"
               />
@@ -49,7 +50,7 @@ export const Navigation = ({ activeSection, setActiveSection, isDark, toggleThem
               </AvatarFallback>
             </Avatar>
             <span className="text-xl font-bold text-foreground hidden sm:block">Kiran Gunathilaka</span>
-            <span className="text-lg font-bold text-foreground sm:hidden">Kiran G.</span>
+            <span className="text-lg font-bold text-foreground sm:hidden">Kiran Gunathilaka</span>
           </div>
 
           {/* Desktop Navigation */}

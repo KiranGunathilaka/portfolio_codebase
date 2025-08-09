@@ -10,7 +10,7 @@ import { MilestoneSection } from "@/components/MilestoneSection";
 import { ContactSection } from "@/components/ContactSection";
 import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import me from "@/assets/me.png";
+//import me from "@/assets/me.png";
 
 
 const PortfolioContent = () => {
@@ -105,7 +105,7 @@ const PortfolioContent = () => {
             <Avatar className="w-10 h-10 shrink-0">
               {/* Put your photo in /public or /src/assets and update the path */}
               <AvatarImage
-                src= {me}
+                src= "https://res.cloudinary.com/dxavadkl2/image/upload/v1753638847/me_cs4dvb.png"
                 alt="Kiran Gunathilaka"
                 className="object-cover"
               />

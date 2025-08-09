@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
   try {
     const { 
       page = 1, 
-      limit = 10, 
+      limit = 200, 
       category, 
       featured, 
       published = true 
@@ -79,7 +79,7 @@ router.get('/:slug', async (req, res) => {
 // Get all blogs for admin (includes unpublished)
 router.get('/admin/all', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, featured } = req.query;
+    const { page = 1, limit = 200, category, featured } = req.query;
 
     const filter = {};
     if (category) filter.category = category;

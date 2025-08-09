@@ -45,26 +45,119 @@ const allowedOrigins = [
   'https://kirangunathilaka.netlify.app',  //
 ].filter(Boolean); // Remove any undefined values
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests) in development
-    if (!origin && process.env.NODE_ENV === 'development') {
-      return callback(null, true);
+// Define PUBLIC endpoints (no sensitive data - anyone can access)
+const publicEndpoints = [
+  '/api/health',
+  '/api/status'
+];
+
+// Define PROTECTED endpoints (sensitive data - strict CORS only)
+const protectedEndpoints = [
+  '/api/auth',
+  '/api/blogs',
+  '/api/projects',
+  '/api/milestones',
+  '/api/skills',
+  '/api/upload'
+];
+
+// Custom CORS middleware for selective access
+app.use((req, res, next) => {
+  const requestPath = req.path;
+  
+  // Check if this is a public endpoint
+  const isPublicEndpoint = publicEndpoints.some(endpoint => 
+    requestPath === endpoint || requestPath.startsWith(endpoint + '/')
+  );
+  
+  if (isPublicEndpoint) {
+    // PUBLIC ENDPOINTS - Allow all origins (no sensitive data here)
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.header('Access-Control-Max-Age', '86400'); // Cache preflight for 24h
+    
+    // Handle preflight requests for public endpoints
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
     }
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+    console.log(`✅ Public endpoint accessed: ${req.method} ${requestPath} from ${req.headers.origin || 'direct'}`);
+    return next();
+  }
+  
+  // Check if this is a protected endpoint
+  const isProtectedEndpoint = protectedEndpoints.some(endpoint => 
+    requestPath.startsWith(endpoint)
+  );
+  
+  if (isProtectedEndpoint) {
+    // PROTECTED ENDPOINTS - Strict CORS enforcement
+    const origin = req.headers.origin;
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      if (!origin || !allowedOrigins.includes(origin)) {
+        console.log(`🚫 CORS blocked preflight for protected endpoint: ${requestPath} from ${origin || 'no-origin'}`);
+        return res.status(403).json({ error: 'CORS: Origin not allowed for protected endpoints' });
+      }
+      
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Max-Age', '86400');
+      return res.sendStatus(200);
     }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['X-Total-Count'],
-  maxAge: 86400 // 24 hours
-}));
+    
+    // For actual requests to protected endpoints - BLOCK REQUESTS WITHOUT VALID ORIGIN
+    if (!origin || !allowedOrigins.includes(origin)) {
+      console.log(`🚫 CORS blocked protected endpoint: ${req.method} ${requestPath} from ${origin || 'no-origin'}`);
+      return res.status(403).json({ 
+        error: 'CORS: Access to protected endpoints denied',
+        message: 'This endpoint contains sensitive data and is restricted to authorized domains only.'
+      });
+    }
+    
+    // Set CORS headers for allowed origins
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Expose-Headers', 'X-Total-Count');
+    
+    console.log(`✅ Protected endpoint accessed: ${req.method} ${requestPath} from ${origin}`);
+    return next();
+  }
+  
+  // For any other endpoints (like /api/debug), apply default CORS but more restrictive
+  const origin = req.headers.origin;
+  
+  // In production, block all other endpoints from unauthorized origins
+  if (process.env.NODE_ENV === 'production' && (!origin || !allowedOrigins.includes(origin))) {
+    console.log(`🚫 CORS blocked other endpoint in production: ${req.method} ${requestPath} from ${origin || 'no-origin'}`);
+    return res.status(403).json({ 
+      error: 'CORS: Access denied',
+      message: 'Access to this endpoint is restricted.'
+    });
+  }
+  
+  // In development, allow no-origin requests
+  if (!origin && process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+  }
+  
+  next();
+});
 
 // Enhanced rate limiting with different limits for different endpoints
 const createRateLimit = (windowMs, max, message) => rateLimit({
@@ -130,11 +223,29 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  const isProtectedEndpoint = protectedEndpoints.some(endpoint => 
+    req.path.startsWith(endpoint)
+  );
+  
+  if (isProtectedEndpoint) {
+    // Extra security headers for sensitive endpoints
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'DENY');
+    res.header('X-XSS-Protection', '1; mode=block');
+    res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  }
+  
+  next();
+});
+
 // Static files with cache headers
 app.use('/uploads', express.static('uploads', {
   maxAge: '1d', // Cache for 1 day
   etag: true
 }));
+
+
 
 // Database connection with enhanced options
 const connectDB = async () => {
@@ -244,15 +355,20 @@ if (process.env.NODE_ENV === 'development') {
   app.get('/api/debug', (req, res) => {
     res.json({
       allowedOrigins,
+      publicEndpoints,
+      protectedEndpoints,
       requestOrigin: req.headers.origin,
       frontendUrl: process.env.FRONTEND_URL,
       userAgent: req.headers['user-agent'],
       ip: req.ip,
-      headers: req.headers
+      headers: req.headers,
+      corsPolicy: {
+        public: "Anyone can access health/status endpoints",
+        protected: "Only allowed origins can access data endpoints"
+      }
     });
   });
 }
-
 // Global error handling middleware
 app.use((error, req, res, next) => {
   console.error('Global error handler:', error);

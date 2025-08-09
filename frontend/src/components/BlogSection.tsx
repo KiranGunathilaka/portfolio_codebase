@@ -24,8 +24,11 @@ interface BlogPost {
 }
 
 export const BlogSection = () => {
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [allBlogPosts, setAllBlogPosts] = useState<BlogPost[]>([]);
+  const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([]);
+  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,13 +37,13 @@ export const BlogSection = () => {
       try {
         setLoading(true);
         
-        // Fetch blogs and categories simultaneously
+        // Fetch more blogs to have enough for filtering
         const [blogsResponse, categoriesResponse] = await Promise.all([
-          ApiService.getBlogs({ limit: 6, published: true }),
+          ApiService.getBlogs({ limit: 50, published: true }), // Increased limit
           ApiService.getBlogCategories()
         ]);
 
-        setBlogPosts(blogsResponse.blogs || []);
+        setAllBlogPosts(blogsResponse.blogs || []);
         setCategories(categoriesResponse || []);
       } catch (err: any) {
         console.error('Error fetching blog data:', err);
@@ -52,6 +55,36 @@ export const BlogSection = () => {
 
     fetchData();
   }, []);
+
+  // Filter posts whenever activeCategory or allBlogPosts changes
+  useEffect(() => {
+    let filtered = allBlogPosts;
+
+    if (activeCategory) {
+      filtered = allBlogPosts.filter(post => post.category === activeCategory);
+    }
+
+    // Sort all posts: featured first, then by published date
+    filtered.sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      
+      const dateA = new Date(a.publishedAt || a.createdAt).getTime();
+      const dateB = new Date(b.publishedAt || b.createdAt).getTime();
+      return dateB - dateA;
+    });
+
+    // Separate featured and non-featured posts
+    const featured = filtered.filter(post => post.featured);
+    const nonFeatured = filtered.filter(post => !post.featured);
+
+    // Set featured posts (no limit, show all featured posts)
+    setFeaturedPosts(featured);
+
+    // Set recent posts (limit to 6)
+    setRecentPosts(nonFeatured.slice(0, 6));
+
+  }, [activeCategory, allBlogPosts]);
 
   const categoryIconMap: { [key: string]: any } = {
     "Robotics": Cpu,
@@ -89,6 +122,14 @@ export const BlogSection = () => {
     });
   };
 
+  const handleCategoryClick = (category: string) => {
+    if (activeCategory === category) {
+      setActiveCategory(null); // Clear filter if clicking the same category
+    } else {
+      setActiveCategory(category);
+    }
+  };
+
   if (loading) {
     return (
       <section className="py-20 bg-background">
@@ -124,8 +165,7 @@ export const BlogSection = () => {
     );
   }
 
-  const featuredPosts = blogPosts.filter(post => post.featured);
-  const recentPosts = blogPosts.filter(post => !post.featured).slice(0, 6);
+  const totalPosts = featuredPosts.length + recentPosts.length;
 
   return (
     <section className="py-20 bg-background">
@@ -141,6 +181,71 @@ export const BlogSection = () => {
               and full-stack development. Learn from real-world project experiences.
             </p>
           </div>
+
+          {/* Blog Categories Filter */}
+          {categories.length > 0 && (
+            <div className="mb-12">
+              <h3 className="text-xl font-bold mb-6 text-center">
+                Filter by <span className="text-primary">Category</span>
+                {activeCategory && (
+                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                    ({activeCategory})
+                  </span>
+                )}
+              </h3>
+              <div className="flex flex-wrap justify-center gap-4 mb-4">
+                {/* All Categories Button */}
+                <Button
+                  variant={activeCategory === null ? "default" : "outline"}
+                  onClick={() => setActiveCategory(null)}
+                  className={`flex items-center space-x-2 ${activeCategory === null
+                    ? "bg-primary text-primary-foreground shadow-glow"
+                    : "hover:bg-primary/10"
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>All Posts</span>
+                </Button>
+
+                {/* Category Filter Buttons */}
+                {categories.map((category, index) => {
+                  const IconComponent = getCategoryIcon(category);
+                  return (
+                    <Button
+                      key={index}
+                      variant={activeCategory === category ? "default" : "outline"}
+                      onClick={() => handleCategoryClick(category)}
+                      className={`flex items-center space-x-2 ${activeCategory === category
+                        ? "bg-primary text-primary-foreground shadow-glow"
+                        : "hover:bg-primary/10"
+                      }`}
+                    >
+                      <IconComponent className="w-4 h-4" />
+                      <span>{category}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* No Posts Message */}
+          {totalPosts === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-lg">
+                No blog posts found {activeCategory ? `in "${activeCategory}"` : ''}.
+              </p>
+              {activeCategory && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveCategory(null)}
+                  className="mt-4"
+                >
+                  View All Posts
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Featured Posts */}
           {featuredPosts.length > 0 && (
@@ -244,7 +349,7 @@ export const BlogSection = () => {
           {recentPosts.length > 0 && (
             <div className="mb-16">
               <h3 className="text-2xl font-bold mb-8 text-center">
-                Recent <span className="text-primary">Posts</span>
+                {activeCategory ? `${activeCategory} Posts` : 'Recent Posts'}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recentPosts.map((post, index) => (
@@ -294,35 +399,6 @@ export const BlogSection = () => {
                     </Card>
                   </Link>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* Blog Categories */}
-          {categories.length > 0 && (
-            <div className="mb-16">
-              <h3 className="text-2xl font-bold mb-8 text-center">
-                Explore by <span className="text-primary">Category</span>
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {categories.map((category, index) => {
-                  const IconComponent = getCategoryIcon(category);
-                  return (
-                    <Card
-                      key={index}
-                      className="group bg-gradient-card border-border/20 shadow-card hover:shadow-hover transition-all duration-300 cursor-pointer"
-                    >
-                      <CardContent className="p-6 text-center">
-                        <div className={`w-12 h-12 rounded-full ${getCategoryColor(category)}/20 mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                          <IconComponent className="w-6 h-6 text-primary" />
-                        </div>
-                        <h4 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">
-                          {category}
-                        </h4>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
               </div>
             </div>
           )}

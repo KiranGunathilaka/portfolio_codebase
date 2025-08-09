@@ -61,27 +61,63 @@ const milestoneSchema = new mongoose.Schema({
   order: { type: Number, default: 0 }
 }, { timestamps: true });
 
-// Skills Schema
-const skillSchema = new mongoose.Schema({
-  category: { 
+// Individual skill subdocument schema
+const individualSkillSchema = new mongoose.Schema({
+  name: { 
     type: String, 
-    enum: ['programming', 'frameworks', 'platforms', 'tools'], 
-    required: true 
+    required: true,
+    trim: true
   },
-  categoryTitle: String,
-  categoryIcon: String,
-  skills: [{
-    name: { type: String, required: true },
-    level: { type: Number, min: 0, max: 100 },
-    description: String
-  }],
-  order: { type: Number, default: 0 }
+  level: { 
+    type: Number, 
+    min: 0, 
+    max: 100,
+    required: true
+  },
+  description: {
+    type: String,
+    trim: true
+  }
+}, { _id: false }); // Disable _id for subdocuments to avoid conflicts
+
+// Skills Schema - FIXED to allow any category
+const skillSchema = new mongoose.Schema({
+  category: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true
+    // REMOVED the enum constraint to allow any category name
+  },
+  categoryTitle: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  categoryIcon: {
+    type: String,
+    required: true,
+    enum: ['Code', 'Globe', 'Cpu', 'Wrench'], // Icons are still constrained
+    default: 'Code'
+  },
+  skills: [individualSkillSchema], // Use the subdocument schema
+  order: { 
+    type: Number, 
+    default: 0 
+  }
 }, { timestamps: true });
 
 // Soft Skills Schema
 const softSkillSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  order: { type: Number, default: 0 }
+  name: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
+  order: { 
+    type: Number, 
+    default: 0 
+  }
 }, { timestamps: true });
 
 // Create indexes for better performance
@@ -89,6 +125,14 @@ blogSchema.index({ slug: 1, published: 1 });
 projectSchema.index({ slug: 1, published: 1 });
 blogSchema.index({ category: 1, featured: 1 });
 projectSchema.index({ category: 1, featured: 1 });
+
+// Skills indexes
+skillSchema.index({ category: 1 }); // Index on category for faster queries
+skillSchema.index({ order: 1 }); // Index on order for sorting
+softSkillSchema.index({ order: 1 }); // Index on order for sorting
+
+// Add compound index to ensure category uniqueness
+skillSchema.index({ category: 1 }, { unique: true });
 
 module.exports = {
   Admin: mongoose.model('Admin', adminSchema),

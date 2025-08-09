@@ -12,3 +12,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+
+Disallow: /admin/
+
+User-agent: GPTBot
+Disallow: /      
+
+Sitemap: https://kirangunathilaka.online/sitemap.xml

@@ -38,11 +38,37 @@ router.get('/', async (req, res) => {
     if (category) filter.category = category;
     if (featured !== undefined) filter.featured = featured === 'true';
 
-    const projects = await Project.find(filter)
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
+    // Special handling for the portfolio section (when limit is 6)
+    // Ensure featured projects appear first
+    let projects;
+    if (limit == 6) {
+      // Get featured projects first
+      const featuredProjects = await Project.find({
+        ...filter,
+        featured: true
+      })
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      // Get non-featured projects
+      const nonFeaturedProjects = await Project.find({
+        ...filter,
+        featured: { $ne: true }
+      })
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      // Combine them with featured first, then take only the limit
+      const allProjects = [...featuredProjects, ...nonFeaturedProjects];
+      projects = allProjects.slice(0, limit);
+    } else {
+      // Normal sorting for other cases
+      projects = await Project.find(filter)
+        .sort({ featured: -1, updatedAt: -1 }) // Featured first, then by modification date
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .lean();
+    }
 
     const total = await Project.countDocuments(filter);
 
@@ -82,14 +108,14 @@ router.get('/:slug', async (req, res) => {
 // Get all projects for admin (includes unpublished)
 router.get('/admin/all', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, featured } = req.query;
+    const { page = 1, limit = 200, category, featured } = req.query;
 
     const filter = {};
     if (category) filter.category = category;
     if (featured !== undefined) filter.featured = featured === 'true';
 
     const projects = await Project.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ featured: -1, updatedAt: -1 }) // Featured first, then by modification date
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .lean();

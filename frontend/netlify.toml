@@ -1,4 +1,12 @@
+# 1️⃣  Force every request that arrives on port 80 (HTTP) to HTTPS
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  from   = "http://kirangunathilaka.online/*"
+  to     = "https://kirangunathilaka.online/:splat"
+  status = 301        # permanent
+  force  = true       # ignore any matching file and always redirect
+
+# 2️⃣  If the visitor is already on HTTPS, fall through to the SPA rule
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200        # rewrite, keeps URL bar unchanged
