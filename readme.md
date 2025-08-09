@@ -4,6 +4,8 @@ A modern full-stack web application showcasing my projects, skills, and expertis
 
 **Live Site:** [kirangunathilaka.online](https://kirangunathilaka.online/)
 
+**Check Backend:** [api.kirangunathilaka.onlline/api/status](https://api.kirangunathilaka.online/api/health)
+
 ---
 
 ## 📸 Screenshots
@@ -12,7 +14,7 @@ A modern full-stack web application showcasing my projects, skills, and expertis
 ![Frontend](https://res.cloudinary.com/dxavadkl2/image/upload/v1753175662/front_biu38n.png)
 
 ### Backend Admin Dashboard
-![Backend](https://res.cloudinary.com/dxavadkl2/image/upload/v1753175661/back_ri41we.png)
+![Backend](https://res.cloudinary.com/dxavadkl2/image/upload/v1754591129/Screenshot_2025-08-07_235455_scsi2q.png)
 
 ---
 
