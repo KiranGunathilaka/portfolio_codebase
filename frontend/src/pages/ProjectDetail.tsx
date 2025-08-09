@@ -12,7 +12,7 @@ interface Project {
   slug: string;
   description: string;
   fullDescription?: string;
-  category: string;
+  category: string[];
   technologies: string[];
   features?: string[];
   techDetails?: string;
@@ -38,7 +38,10 @@ export default function ProjectDetail() {
       try {
         setLoading(true);
         const projectData = await ApiService.getProjectBySlug(slug);
-        setProject(projectData);
+        setProject({
+          ...projectData,
+          category: Array.isArray(projectData.category) ? projectData.category : [projectData.category]
+        });
       } catch (err: any) {
         console.error('Error fetching project:', err);
         setError(err.message);
@@ -128,7 +131,11 @@ export default function ProjectDetail() {
           {/* Project Header */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4">
-              <Badge variant="secondary" className="capitalize">{project.category}</Badge>
+              <div className="flex gap-2">
+                {project.category.map(cat => (
+                  <Badge key={cat} variant="secondary" className="capitalize">{cat}</Badge>
+                ))}
+              </div>
               <div className="flex items-center text-muted-foreground text-sm">
                 <Calendar className="w-4 h-4 mr-1" />
                 {project.date}

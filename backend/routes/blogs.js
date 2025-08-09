@@ -12,7 +12,10 @@ const blogSchema = Joi.object({
   excerpt: Joi.string().required(),
   content: Joi.string().required(),
   author: Joi.string().default('Kiran Gunathilaka'),
-  category: Joi.string().required(),
+  category: Joi.alternatives().try(
+    Joi.array().items(Joi.string()),
+    Joi.string()
+  ).required(),
   tags: Joi.array().items(Joi.string()),
   featured: Joi.boolean().default(false),
   image: Joi.string().allow(''),
@@ -32,14 +35,22 @@ router.get('/', async (req, res) => {
     } = req.query;
 
     const filter = { published: published === 'true' };
-    if (category) filter.category = category;
+    if (category) {
+      const categories = Array.isArray(category) ? category : [category];
+      filter.category = { $in: categories };
+    }
     if (featured !== undefined) filter.featured = featured === 'true';
 
-    const blogs = await Blog.find(filter)
+    let blogs = await Blog.find(filter)
       .sort({ publishedAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .lean();
+
+    blogs = blogs.map(b => ({
+      ...b,
+      category: Array.isArray(b.category) ? b.category : [b.category]
+    }));
 
     const total = await Blog.countDocuments(filter);
 
@@ -59,14 +70,19 @@ router.get('/', async (req, res) => {
 // Get single blog by slug (public)
 router.get('/:slug', async (req, res) => {
   try {
-    const blog = await Blog.findOne({ 
-      slug: req.params.slug, 
-      published: true 
+    let blog = await Blog.findOne({
+      slug: req.params.slug,
+      published: true
     }).lean();
 
     if (!blog) {
       return res.status(404).json({ error: 'Blog not found' });
     }
+
+    blog = {
+      ...blog,
+      category: Array.isArray(blog.category) ? blog.category : [blog.category]
+    };
 
     res.json(blog);
 
@@ -82,14 +98,22 @@ router.get('/admin/all', auth, async (req, res) => {
     const { page = 1, limit = 200, category, featured } = req.query;
 
     const filter = {};
-    if (category) filter.category = category;
+    if (category) {
+      const categories = Array.isArray(category) ? category : [category];
+      filter.category = { $in: categories };
+    }
     if (featured !== undefined) filter.featured = featured === 'true';
 
-    const blogs = await Blog.find(filter)
+    let blogs = await Blog.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .lean();
+
+    blogs = blogs.map(b => ({
+      ...b,
+      category: Array.isArray(b.category) ? b.category : [b.category]
+    }));
 
     const total = await Blog.countDocuments(filter);
 
@@ -118,7 +142,12 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'Slug already exists' });
     }
 
-    const blog = new Blog(req.body);
+    const blogData = {
+      ...req.body,
+      category: Array.isArray(req.body.category) ? req.body.category : [req.body.category]
+    };
+
+    const blog = new Blog(blogData);
     await blog.save();
 
     res.status(201).json(blog);
@@ -144,9 +173,14 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(400).json({ error: 'Slug already exists' });
     }
 
+    const updateData = {
+      ...req.body,
+      category: Array.isArray(req.body.category) ? req.body.category : [req.body.category]
+    };
+
     const blog = await Blog.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 

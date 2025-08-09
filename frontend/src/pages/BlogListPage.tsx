@@ -13,7 +13,7 @@ interface BlogPost {
   excerpt: string;
   content: string;
   author: string;
-  category: string;
+  category: string[];
   tags: string[];
   featured: boolean;
   image?: string;
@@ -35,11 +35,14 @@ export const BlogListPage = () => {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
-        const response = await ApiService.getBlogs({ 
-          limit: 50, 
-          published: true 
+        const response = await ApiService.getBlogs({
+          limit: 50,
+          published: true
         });
-        setBlogPosts(response.blogs || []);
+        setBlogPosts((response.blogs || []).map((b: any) => ({
+          ...b,
+          category: Array.isArray(b.category) ? b.category : [b.category]
+        })));
       } catch (err: any) {
         console.error('Error fetching blogs:', err);
         setError(err.message);
@@ -168,8 +171,8 @@ export const BlogListPage = () => {
                     <CardContent className="p-6 flex flex-col h-full">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-3">
-                          <Badge className={`${getCategoryColor(post.category)} text-white text-xs`}>
-                            {post.category}
+                          <Badge className={`${getCategoryColor(post.category[0])} text-white text-xs`}>
+                            {post.category[0]}
                           </Badge>
                           {post.featured && (
                             <Badge variant="secondary" className="text-xs">

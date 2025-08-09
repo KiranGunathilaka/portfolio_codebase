@@ -11,7 +11,10 @@ const projectSchema = Joi.object({
   slug: Joi.string().required(),
   description: Joi.string().required(),
   fullDescription: Joi.string().allow(''),
-  category: Joi.string().required(),
+  category: Joi.alternatives().try(
+    Joi.array().items(Joi.string()),
+    Joi.string()
+  ).required(),
   technologies: Joi.array().items(Joi.string()),
   features: Joi.array().items(Joi.string()),
   techDetails: Joi.string().allow(''),
@@ -35,7 +38,10 @@ router.get('/', async (req, res) => {
     } = req.query;
 
     const filter = { published: published === 'true' };
-    if (category) filter.category = category;
+    if (category) {
+      const categories = Array.isArray(category) ? category : [category];
+      filter.category = { $in: categories };
+    }
     if (featured !== undefined) filter.featured = featured === 'true';
 
     // Special handling for the portfolio section (when limit is 6)
@@ -43,7 +49,7 @@ router.get('/', async (req, res) => {
     let projects;
     if (limit == 6) {
       // Get featured projects first
-      const featuredProjects = await Project.find({
+      let featuredProjects = await Project.find({
         ...filter,
         featured: true
       })
@@ -51,12 +57,22 @@ router.get('/', async (req, res) => {
         .lean();
 
       // Get non-featured projects
-      const nonFeaturedProjects = await Project.find({
+      let nonFeaturedProjects = await Project.find({
         ...filter,
         featured: { $ne: true }
       })
         .sort({ updatedAt: -1 })
         .lean();
+
+      featuredProjects = featuredProjects.map(p => ({
+        ...p,
+        category: Array.isArray(p.category) ? p.category : [p.category]
+      }));
+
+      nonFeaturedProjects = nonFeaturedProjects.map(p => ({
+        ...p,
+        category: Array.isArray(p.category) ? p.category : [p.category]
+      }));
 
       // Combine them with featured first, then take only the limit
       const allProjects = [...featuredProjects, ...nonFeaturedProjects];
@@ -68,6 +84,11 @@ router.get('/', async (req, res) => {
         .limit(limit * 1)
         .skip((page - 1) * limit)
         .lean();
+
+      projects = projects.map(p => ({
+        ...p,
+        category: Array.isArray(p.category) ? p.category : [p.category]
+      }));
     }
 
     const total = await Project.countDocuments(filter);
@@ -88,14 +109,19 @@ router.get('/', async (req, res) => {
 // Get single project by slug (public)
 router.get('/:slug', async (req, res) => {
   try {
-    const project = await Project.findOne({ 
-      slug: req.params.slug, 
-      published: true 
+    let project = await Project.findOne({
+      slug: req.params.slug,
+      published: true
     }).lean();
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
+
+    project = {
+      ...project,
+      category: Array.isArray(project.category) ? project.category : [project.category]
+    };
 
     res.json(project);
 
@@ -111,14 +137,22 @@ router.get('/admin/all', auth, async (req, res) => {
     const { page = 1, limit = 200, category, featured } = req.query;
 
     const filter = {};
-    if (category) filter.category = category;
+    if (category) {
+      const categories = Array.isArray(category) ? category : [category];
+      filter.category = { $in: categories };
+    }
     if (featured !== undefined) filter.featured = featured === 'true';
 
-    const projects = await Project.find(filter)
+    let projects = await Project.find(filter)
       .sort({ featured: -1, updatedAt: -1 }) // Featured first, then by modification date
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .lean();
+
+    projects = projects.map(p => ({
+      ...p,
+      category: Array.isArray(p.category) ? p.category : [p.category]
+    }));
 
     const total = await Project.countDocuments(filter);
 
@@ -147,7 +181,12 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'Slug already exists' });
     }
 
-    const project = new Project(req.body);
+    const projectData = {
+      ...req.body,
+      category: Array.isArray(req.body.category) ? req.body.category : [req.body.category]
+    };
+
+    const project = new Project(projectData);
     await project.save();
 
     res.status(201).json(project);
@@ -173,9 +212,14 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(400).json({ error: 'Slug already exists' });
     }
 
+    const updateData = {
+      ...req.body,
+      category: Array.isArray(req.body.category) ? req.body.category : [req.body.category]
+    };
+
     const project = await Project.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 

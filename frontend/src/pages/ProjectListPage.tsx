@@ -12,7 +12,7 @@ interface Project {
   slug: string;
   description: string;
   fullDescription?: string;
-  category: string;
+  category: string[];
   technologies: string[];
   features?: string[];
   techDetails?: string;
@@ -37,11 +37,14 @@ export const ProjectListPage = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const response = await ApiService.getProjects({ 
-          limit: 50, 
-          published: true 
+        const response = await ApiService.getProjects({
+          limit: 50,
+          published: true
         });
-        setProjects(response.projects || []);
+        setProjects((response.projects || []).map((p: any) => ({
+          ...p,
+          category: Array.isArray(p.category) ? p.category : [p.category]
+        })));
       } catch (err: any) {
         console.error('Error fetching projects:', err);
         setError(err.message);
@@ -63,7 +66,7 @@ export const ProjectListPage = () => {
 
 const filteredProjects = (activeFilter === "all"
   ? projects
-  : projects.filter(project => project.category === activeFilter)
+  : projects.filter(project => project.category.includes(activeFilter))
 ).sort((a, b) => {
   // Featured projects first
   if (a.featured && !b.featured) return -1;
@@ -257,7 +260,7 @@ const filteredProjects = (activeFilter === "all"
                       {/* Category Badge */}
                       <div className="absolute top-4 left-4">
                         <Badge variant="secondary" className="capitalize">
-                          {project.category}
+                          {project.category[0]}
                         </Badge>
                       </div>
                     </div>

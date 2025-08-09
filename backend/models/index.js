@@ -15,7 +15,11 @@ const blogSchema = new mongoose.Schema({
   excerpt: { type: String, required: true },
   content: { type: String, required: true },
   author: { type: String, default: 'Kiran Gunathilaka' },
-  category: { type: String, required: true },
+  category: {
+    type: [String],
+    required: true,
+    set: v => Array.isArray(v) ? v : [v]
+  },
   tags: [String],
   featured: { type: Boolean, default: false },
   image: String,
@@ -30,7 +34,11 @@ const projectSchema = new mongoose.Schema({
   slug: { type: String, required: true, unique: true },
   description: { type: String, required: true },
   fullDescription: String,
-  category: { type: String, required: true },
+  category: {
+    type: [String],
+    required: true,
+    set: v => Array.isArray(v) ? v : [v]
+  },
   technologies: [String],
   features: [String],
   techDetails: String,

@@ -13,7 +13,7 @@ interface BlogPost {
   excerpt: string;
   content: string;
   author: string;
-  category: string;
+  category: string[];
   tags: string[];
   featured: boolean;
   image?: string;
@@ -37,7 +37,10 @@ export default function BlogPost() {
       try {
         setLoading(true);
         const blogPost = await ApiService.getBlogBySlug(slug);
-        setPost(blogPost);
+        setPost({
+          ...blogPost,
+          category: Array.isArray(blogPost.category) ? blogPost.category : [blogPost.category]
+        });
       } catch (err: any) {
         console.error('Error fetching blog post:', err);
         setError(err.message);
@@ -128,7 +131,11 @@ export default function BlogPost() {
           {/* Article Header */}
           <header className="mb-8">
             <div className="flex items-center gap-4 mb-4">
-              <Badge variant="secondary">{post.category}</Badge>
+              <div className="flex gap-2">
+                {post.category.map(cat => (
+                  <Badge key={cat} variant="secondary">{cat}</Badge>
+                ))}
+              </div>
               <div className="flex items-center text-muted-foreground text-sm gap-4">
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-1" />

@@ -13,7 +13,7 @@ interface BlogPost {
   excerpt: string;
   content: string;
   author: string;
-  category: string;
+  category: string[];
   tags: string[];
   featured: boolean;
   image?: string;
@@ -43,7 +43,10 @@ export const BlogSection = () => {
           ApiService.getBlogCategories()
         ]);
 
-        setAllBlogPosts(blogsResponse.blogs || []);
+        setAllBlogPosts((blogsResponse.blogs || []).map((b: any) => ({
+          ...b,
+          category: Array.isArray(b.category) ? b.category : [b.category]
+        })));
         setCategories(categoriesResponse || []);
       } catch (err: any) {
         console.error('Error fetching blog data:', err);
@@ -61,7 +64,11 @@ export const BlogSection = () => {
     let filtered = allBlogPosts;
 
     if (activeCategory) {
-      filtered = allBlogPosts.filter(post => post.category === activeCategory);
+      filtered = allBlogPosts.filter(post =>
+        Array.isArray(post.category)
+          ? post.category.includes(activeCategory)
+          : post.category === activeCategory
+      );
     }
 
     // Sort all posts: featured first, then by published date
@@ -268,9 +275,9 @@ export const BlogSection = () => {
                         ) : (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
-                              <div className={`w-16 h-16 rounded-full ${getCategoryColor(post.category)}/20 mx-auto mb-2 flex items-center justify-center`}>
+                              <div className={`w-16 h-16 rounded-full ${getCategoryColor(post.category[0])}/20 mx-auto mb-2 flex items-center justify-center`}>
                                 {(() => {
-                                  const IconComponent = getCategoryIcon(post.category);
+                                  const IconComponent = getCategoryIcon(post.category[0]);
                                   return <IconComponent className="w-8 h-8 text-primary" />;
                                 })()}
                               </div>
@@ -281,8 +288,8 @@ export const BlogSection = () => {
 
                         {/* Category Badge */}
                         <div className="absolute top-4 left-4">
-                          <Badge className={`${getCategoryColor(post.category)} text-white`}>
-                            {post.category}
+                          <Badge className={`${getCategoryColor(post.category[0])} text-white`}>
+                            {post.category[0]}
                           </Badge>
                         </div>
 
@@ -358,8 +365,8 @@ export const BlogSection = () => {
                       <CardContent className="p-6">
                         <div className="mb-4">
                           <div className="flex items-center justify-between mb-3">
-                            <Badge className={`${getCategoryColor(post.category)} text-white text-xs`}>
-                              {post.category}
+                            <Badge className={`${getCategoryColor(post.category[0])} text-white text-xs`}>
+                              {post.category[0]}
                             </Badge>
                             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                               <Clock className="w-3 h-3" />

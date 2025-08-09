@@ -12,7 +12,7 @@ interface Project {
   slug: string;
   description: string;
   fullDescription?: string;
-  category: string;
+  category: string[];
   technologies: string[];
   features?: string[];
   techDetails?: string;
@@ -42,7 +42,10 @@ export const PortfolioSection = () => {
           limit: 100, // Fetch more projects to have enough for filtering
           published: true
         });
-        setProjects(response.projects || []);
+        setProjects((response.projects || []).map((p: any) => ({
+          ...p,
+          category: Array.isArray(p.category) ? p.category : [p.category]
+        })));
       } catch (err: any) {
         console.error('Error fetching projects:', err);
         setError(err.message);
@@ -60,7 +63,7 @@ export const PortfolioSection = () => {
 
     // Filter by category
     if (activeFilter !== "all") {
-      filtered = projects.filter(project => project.category === activeFilter);
+      filtered = projects.filter(project => project.category.includes(activeFilter));
     }
 
     // Sort: featured first, then by updatedAt (most recent first)

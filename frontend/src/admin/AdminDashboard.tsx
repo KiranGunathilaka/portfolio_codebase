@@ -38,7 +38,7 @@ interface BlogPost {
   slug: string;
   excerpt: string;
   content: string;
-  category: string;
+  category: string[];
   tags: string[];
   published: boolean;
   featured: boolean;
@@ -52,7 +52,7 @@ interface Project {
   slug: string;
   description: string;
   fullDescription?: string;
-  category: string;
+  category: string[];
   technologies: string[];
   features?: string[];
   techDetails?: string;
@@ -169,8 +169,14 @@ const AdminDashboard = () => {
         ApiService.getSoftSkills()
       ]);
 
-      setBlogs(blogsRes.blogs || []);
-      setProjects(projectsRes.projects || []);
+      setBlogs((blogsRes.blogs || []).map((b: any) => ({
+        ...b,
+        category: Array.isArray(b.category) ? b.category : [b.category]
+      })));
+      setProjects((projectsRes.projects || []).map((p: any) => ({
+        ...p,
+        category: Array.isArray(p.category) ? p.category : [p.category]
+      })));
       setMilestones(milestonesRes.milestones || []);
       setSkillCategories(skillsRes.skills || []);
       setSoftSkills(softSkillsRes.softSkills || []);
@@ -287,7 +293,9 @@ const AdminDashboard = () => {
       slug: editingItem?.slug || '',
       excerpt: editingItem?.excerpt || '',
       content: editingItem?.content || '',
-      category: editingItem?.category || 'Robotics',
+      category: Array.isArray(editingItem?.category)
+        ? editingItem.category
+        : [editingItem?.category || 'Robotics'],
       tags: editingItem?.tags?.join(', ') || '',
       featured: editingItem?.featured || false,
       published: editingItem?.published !== false,
@@ -303,7 +311,8 @@ const AdminDashboard = () => {
         const data = {
           ...formData,
           slug: formData.slug || generateSlug(formData.title),
-          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          category: formData.category
         };
 
         if (editingItem) {
@@ -375,10 +384,16 @@ const AdminDashboard = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Category</label>
+            <label className="block text-sm font-medium mb-2">Categories</label>
             <select
+              multiple
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  category: Array.from(e.target.selectedOptions, opt => opt.value)
+                })
+              }
               className="w-full p-3 border rounded-lg bg-background"
             >
               <option value="Robotics">Robotics</option>
@@ -466,7 +481,9 @@ const AdminDashboard = () => {
       slug: editingItem?.slug || '',
       description: editingItem?.description || '',
       fullDescription: editingItem?.fullDescription || '',
-      category: editingItem?.category || 'robotics',
+      category: Array.isArray(editingItem?.category)
+        ? editingItem.category
+        : [editingItem?.category || 'robotics'],
       technologies: editingItem?.technologies?.join(', ') || '',
       features: editingItem?.features?.join('\n') || '',
       techDetails: editingItem?.techDetails || '',
@@ -487,7 +504,8 @@ const AdminDashboard = () => {
           ...formData,
           slug: formData.slug || generateSlug(formData.title),
           technologies: formData.technologies.split(',').map(tech => tech.trim()).filter(Boolean),
-          features: formData.features.split('\n').map(feature => feature.trim()).filter(Boolean)
+          features: formData.features.split('\n').map(feature => feature.trim()).filter(Boolean),
+          category: formData.category
         };
 
         if (editingItem) {
@@ -559,10 +577,16 @@ const AdminDashboard = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Category</label>
+            <label className="block text-sm font-medium mb-2">Categories</label>
             <select
+              multiple
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  category: Array.from(e.target.selectedOptions, opt => opt.value)
+                })
+              }
               className="w-full p-3 border rounded-lg bg-background"
             >
               <option value="robotics">Robotics</option>
@@ -1560,7 +1584,7 @@ const AdminDashboard = () => {
                 <div key={blog._id} className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">{blog.title}</p>
-                    <p className="text-sm text-muted-foreground">{blog.category}</p>
+                    <p className="text-sm text-muted-foreground">{Array.isArray(blog.category) ? blog.category.join(', ') : blog.category}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={blog.published ? 'default' : 'secondary'}>
@@ -1584,7 +1608,7 @@ const AdminDashboard = () => {
                 <div key={project._id} className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">{project.title}</p>
-                    <p className="text-sm text-muted-foreground">{project.category}</p>
+                    <p className="text-sm text-muted-foreground">{Array.isArray(project.category) ? project.category.join(', ') : project.category}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={project.published ? 'default' : 'secondary'}>
@@ -1629,7 +1653,7 @@ const AdminDashboard = () => {
                 {items.map(item => (
                   <tr key={item._id} className="border-b hover:bg-muted/50">
                     <td className="p-4 font-medium">{item.title}</td>
-                    <td className="p-4">{item.category || item.institution || item.issuer || item.type}</td>
+                    <td className="p-4">{Array.isArray(item.category) ? item.category.join(', ') : (item.category || item.institution || item.issuer || item.type)}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <Badge variant={item.published !== false ? 'default' : 'secondary'}>
